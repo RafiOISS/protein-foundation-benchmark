@@ -1,0 +1,20 @@
+# ProteinBERT model configuration
+
+model:
+  name: proteinbert
+  family: proteinbert
+  framework: tensorflow
+  default_variant: pretrained
+  variants:
+    pretrained:
+      params: 16M
+      embedding_dim: 768
+      num_layers: 12
+  max_seq_len: 512
+  pooling: mean
+  batch_size: 8
+  learning_rate: 0.0001
+  epochs: 20
+  mixed_precision: false
+  seed: 42
+  requires_torch: false
