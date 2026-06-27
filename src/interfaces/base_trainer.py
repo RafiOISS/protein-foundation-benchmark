@@ -4,6 +4,7 @@ All training implementations must inherit from BaseTrainer.
 """
 
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import torch

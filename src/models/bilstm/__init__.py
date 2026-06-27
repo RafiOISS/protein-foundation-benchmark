@@ -4,6 +4,7 @@ Simple BiLSTM baseline for protein sequence classification/regression.
 """
 
 import logging
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import torch

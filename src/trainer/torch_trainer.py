@@ -1,6 +1,5 @@
-"""Trainer — configurable training loop with checkpointing and logging."""
+"""TorchTrainer — PyTorch training loop for ESM2, ProtBERT, ProtT5, CNN, BiLSTM."""
 
-import logging
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Union
 
@@ -8,7 +7,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
-from ..interfaces.base_trainer import BaseTrainer
+from .base_trainer import BaseTrainer
 from ..framework.checkpoint import Checkpoint
 from ..utils.logging import get_logger
 
@@ -16,18 +15,16 @@ from ..utils.logging import get_logger
 logger = get_logger(__name__)
 
 
-class Trainer(BaseTrainer):
-    """Configurable training loop with checkpointing and logging."""
+class TorchTrainer(BaseTrainer):
+    """PyTorch trainer with checkpointing, logging, and early stopping."""
 
     def __init__(
         self,
         checkpoint: Optional[Checkpoint] = None,
         device: str = "auto",
-        config: Optional[Dict[str, Any]] = None,
     ) -> None:
         self.checkpoint = checkpoint
-        self.device = torch.device(device) if device != "auto" else None
-        self.config = config or {}
+        self._device = torch.device(device) if device != "auto" else None
         self._history: Dict[str, List[float]] = {}
 
     def train(
@@ -40,9 +37,8 @@ class Trainer(BaseTrainer):
         loss_fn: Optional[Callable] = None,
         optimizer: Optional[torch.optim.Optimizer] = None,
         scheduler: Optional[Any] = None,
-        gradient_clip: float = 0.0,
+        gradient_clip: float = 1.0,
         early_stopping_patience: int = 5,
-        metrics: Optional[List[str]] = None,
         **kwargs,
     ) -> Dict[str, Any]:
         if loss_fn is None:
@@ -52,28 +48,23 @@ class Trainer(BaseTrainer):
 
         history = {"train_loss": [], "val_loss": []}
         best_val = float("inf")
-        patience_counter = 0
+        patience = 0
 
         for epoch in range(epochs):
-            # Training
             model.train()
             train_loss = 0.0
             for batch in train_loader:
                 optimizer.zero_grad()
-                sequences = batch["sequence"]
+                outputs = model(batch["sequence"])
                 targets = batch["target"].to(model.device)
-                outputs = model(sequences)
                 loss = loss_fn(outputs, targets)
                 loss.backward()
-
                 if gradient_clip > 0:
                     torch.nn.utils.clip_grad_norm_(model.parameters(), gradient_clip)
-
                 optimizer.step()
                 train_loss += loss.item()
             train_loss /= len(train_loader)
 
-            # Validation
             model.eval()
             val_loss = 0.0
             with torch.no_grad():
@@ -92,15 +83,14 @@ class Trainer(BaseTrainer):
             if self.checkpoint:
                 self.checkpoint.save(model, epoch=epoch, step=epoch * len(train_loader), metrics={"val_loss": val_loss}, optimizer=optimizer, scheduler=scheduler)
 
-            logger.info(f"Epoch {epoch+1}/{epochs}: train_loss={train_loss:.4f}, val_loss={val_loss:.4f}")
+            logger.info(f"Epoch {epoch+1}/{epochs}: train_loss={train_loss:.4f}  val_loss={val_loss:.4f}")
 
-            # Early stopping
             if val_loss < best_val:
                 best_val = val_loss
-                patience_counter = 0
+                patience = 0
             else:
-                patience_counter += 1
-                if patience_counter >= early_stopping_patience:
+                patience += 1
+                if patience >= early_stopping_patience:
                     logger.info(f"Early stopping at epoch {epoch+1}")
                     break
 
@@ -109,14 +99,14 @@ class Trainer(BaseTrainer):
 
     def validate(self, model: nn.Module, val_loader: DataLoader, **kwargs) -> Dict[str, float]:
         model.eval()
-        total_loss = 0.0
         loss_fn = nn.MSELoss()
+        total = 0.0
         with torch.no_grad():
             for batch in val_loader:
                 outputs = model(batch["sequence"])
                 targets = batch["target"].to(model.device)
-                total_loss += loss_fn(outputs, targets).item()
-        return {"val_loss": total_loss / len(val_loader)}
+                total += loss_fn(outputs, targets).item()
+        return {"val_loss": total / len(val_loader)}
 
     def save_checkpoint(self, path: Union[str, Path]) -> None:
         torch.save(self._history, path)

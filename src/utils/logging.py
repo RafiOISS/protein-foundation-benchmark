@@ -1,6 +1,7 @@
 """Logging Utilities for the Protein Foundation Model Benchmark Framework.
 
 Provides structured logging configuration and utilities.
+Rich is optional — falls back to standard logging if not installed.
 """
 
 import logging
@@ -8,8 +9,12 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
-from rich.logging import RichHandler
-from rich.console import Console
+try:
+    from rich.logging import RichHandler
+    from rich.console import Console
+    _HAS_RICH = True
+except ImportError:
+    _HAS_RICH = False
 
 
 def setup_logging(
@@ -49,7 +54,7 @@ def setup_logging(
 
     # Console handler
     if console:
-        if rich_console:
+        if rich_console and _HAS_RICH:
             console_handler = RichHandler(
                 console=Console(stderr=True),
                 show_time=True,

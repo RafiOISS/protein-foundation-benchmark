@@ -60,8 +60,6 @@ setup(
             "ruff>=0.1.0",
             "mypy>=1.5.0",
             "pre-commit>=3.5.0",
-            "hydra-core>=1.3.0",
-            "omegaconf>=2.3.0",
             "jupyter>=1.0.0",
             "ipykernel>=6.25.0",
         ],
