@@ -4,7 +4,8 @@ Responsibilities:
   - lazy import TensorFlow and proteinbert packages
   - instantiate and manage the pretrained model
   - expose placeholder interfaces: load(), predict(), save(), summary()
-  - no training logic, no dataset preprocessing
+  - preprocessing: prepare_inputs() — convert raw dataset to model-ready batches
+  - no training logic
 """
 
 from pathlib import Path
@@ -66,8 +67,217 @@ class ProteinBERTModel(BaseProteinModel):
         self._tf_model: Any = None
         self._tokenizer: Any = None
         self._loaded: bool = False
+        self._cache_manager: Any = None
+        self._runtime: Any = None
 
         logger.info("ProteinBERTModel initialized (TensorFlow backend not yet loaded)")
+
+    # ------------------------------------------------------------------
+    # Preprocessing + adapter
+    # ------------------------------------------------------------------
+
+    def prepare_inputs(
+        self,
+        dataset: Any,
+        output_dir: Optional[Union[str, Path]] = None,
+    ) -> Dict[str, Any]:
+        """Preprocess a TAPE SS3 dataset into ProteinBERT-ready inputs.
+
+        Runs the full preprocessing pipeline: validation, encoding,
+        padding, truncation, batching, statistics, figures, and report.
+
+        Args:
+            dataset: TapeSS3Dataset instance with loaded data.
+            output_dir: Output directory for preprocessing artifacts.
+                       If None, uses outputs/preprocessing/.
+
+        Returns:
+            Dict with preprocessing results:
+              - stats: all statistics
+              - figures: dict of figure_name -> path
+              - report: path to preprocessing report
+              - encoded_shape: shape of encoded input array
+              - num_valid_sequences: number of valid sequences
+        """
+        from .preprocessing import PreprocessingPipeline
+
+        # Build preprocessing config from model config
+        preproc_config = {
+            "padding": self.config.get("padding", "right"),
+            "truncation": self.config.get("truncation", True),
+            "mask_padding": self.config.get("mask_padding", True),
+            "max_length": self.config.get("max_seq_len", 512),
+            "unknown_token": self.config.get("unknown_token", "X"),
+            "extended_alphabet": self.config.get("extended_alphabet", False),
+            "batch_size": self.config.get("batch_size", 8),
+            "shuffle": False,
+            "seed": self.config.get("seed", 42),
+        }
+
+        pipeline = PreprocessingPipeline(
+            config=preproc_config,
+            output_dir=output_dir,
+        )
+
+        if dataset is not None:
+            result = pipeline.run(dataset)
+        else:
+            # Synthetic data for testing / dry-run
+            result = pipeline.run_on_sequences(
+                sequences=["ACDEFGHIKL" * 10, "MNPQRSTVWY" * 5],
+                labels=["H", "E"],
+            )
+        logger.info(f"prepare_inputs complete: {result['num_valid_sequences']} sequences prepared")
+
+        return result
+
+    def prepare_dataset(
+        self,
+        sequences: List[str],
+        labels: Optional[List[Any]] = None,
+        output_dir: Optional[Union[str, Path]] = None,
+        experiment_id: Optional[str] = None,
+    ) -> "ProteinBERTDataAdapter":
+        """Preprocess raw sequences and create a validated data adapter.
+
+        One-stop method: preprocessing → encoding → padding → adapter.
+        Returns a ProteinBERTDataAdapter ready for iteration or TF dataset creation.
+
+        Args:
+            sequences: Raw protein sequence strings.
+            labels: Optional SS3 label strings.
+            output_dir: Explicit output directory for all adapter artifacts.
+                        If None, uses outputs/experiments/<experiment_id>/adapter/.
+            experiment_id: Experiment ID for structured output under
+                           outputs/experiments/<experiment_id>/adapter/.
+                           Only used if output_dir is None.
+
+        Returns:
+            Configured ProteinBERTDataAdapter instance.
+        """
+        from .adapter import ProteinBERTDataAdapter, _build_experiment_path
+
+        adapter_config = {
+            "batch_size": self.config.get("batch_size", 8),
+            "max_length": self.config.get("max_seq_len", 512),
+            "padding": self.config.get("padding", "right"),
+            "truncation": self.config.get("truncation", True),
+            "extended_alphabet": self.config.get("extended_alphabet", False),
+            "unknown_token": self.config.get("unknown_token", "X"),
+            "shuffle": False,
+            "seed": self.config.get("seed", 42),
+        }
+
+        adapter = ProteinBERTDataAdapter(config=adapter_config)
+        adapter.create_batches(sequences, labels)
+
+        # Save all artifacts
+        adapter.save_all(output_dir=output_dir, experiment_id=experiment_id)
+
+        logger.info(
+            f"prepare_dataset complete: {len(adapter)} batches, "
+            f"{adapter.info()['num_samples']} samples"
+        )
+
+        return adapter
+
+    # ------------------------------------------------------------------
+    # Runtime initialization
+    # ------------------------------------------------------------------
+
+    def initialize_runtime(
+        self,
+        workspace_root: Optional[Union[str, Path]] = None,
+        runtime_config: Optional[Dict[str, Any]] = None,
+    ) -> "Runtime":
+        """Initialize runtime with full validation.
+
+        Initialization order:
+          1. Load configuration
+          2. Initialize CacheManager
+          3. Create workspace directories
+          4. Verify directory permissions
+          5. Verify available disk space
+          6. Configure cache environment variables
+          7. Validate environment
+          8. Set deterministic seeds
+          9. Configure GPU
+
+        No TensorFlow imports during initialization.
+
+        Args:
+            workspace_root: Project workspace root (auto-detected if None).
+            runtime_config: Runtime configuration overrides.
+
+        Returns:
+            Runtime instance.
+        """
+        from .runtime import Runtime
+
+        if workspace_root is None:
+            workspace_root = Path(__file__).resolve().parent.parent.parent.parent
+
+        runtime = Runtime(
+            workspace_root=workspace_root,
+            config=runtime_config,
+        )
+        runtime.initialize()
+        self._runtime = runtime
+        self._cache_manager = runtime.cache_manager
+
+        logger.info(f"Runtime initialized (workspace={workspace_root})")
+        return runtime
+
+    @property
+    def runtime(self) -> Any:
+        """Get the Runtime instance (None if not initialized)."""
+        return self._runtime
+
+    @property
+    def cache_manager(self) -> Any:
+        """Get the CacheManager instance (None if not initialized)."""
+        return self._cache_manager
+
+    def validate_environment(self) -> Dict[str, Any]:
+        """Run pre-flight environment validation.
+
+        Returns:
+            Validation results dict.
+
+        Raises:
+            RuntimeError: If validation fails.
+        """
+        from ...utils.environment import validate_environment
+
+        ws = Path(__file__).resolve().parent.parent.parent.parent
+        cache_root = ws / "outputs" / "cache"
+        return validate_environment(
+            workspace_root=ws,
+            cache_root=cache_root,
+            min_disk_gb=self.config.get("min_disk_space_gb", 5.0),
+            require_gpu=False,
+        )
+
+    def generate_runtime_reports(
+        self,
+        output_dir: Optional[Union[str, Path]] = None,
+    ) -> Dict[str, Path]:
+        """Generate runtime evidence reports.
+
+        Args:
+            output_dir: Output directory (default: outputs/runtime/).
+
+        Returns:
+            Dict of artifact name -> Path.
+
+        Raises:
+            RuntimeError: If runtime not initialized.
+        """
+        if self._runtime is None:
+            raise RuntimeError(
+                "Runtime not initialized. Call initialize_runtime() first."
+            )
+        return self._runtime.generate_reports(output_dir=output_dir)
 
     # ------------------------------------------------------------------
     # Lazy loading

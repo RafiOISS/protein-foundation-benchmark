@@ -1,0 +1,9 @@
+# Runtime configuration
+
+runtime:
+  seed: 42
+  deterministic: true
+  mixed_precision: false
+  memory_growth: true
+  min_disk_space_gb: 1.0
+  require_gpu: false

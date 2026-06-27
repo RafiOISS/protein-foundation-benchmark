@@ -18,3 +18,12 @@ model:
   mixed_precision: false
   seed: 42
   requires_torch: false
+
+  # Preprocessing configuration
+  preprocessing:
+    padding: right
+    truncation: true
+    mask_padding: true
+    max_length: 512
+    unknown_token: X
+    extended_alphabet: false

@@ -3,6 +3,9 @@
 Provides ProteinBERTModel — a TensorFlow-backed protein language model
 wrapper with lazy imports. Registered with ModelRegistry on import.
 
+Includes ProteinBERTDataAdapter — a framework-to-model tensor bridge
+for converting preprocessed outputs into ProteinBERT-ready tensors.
+
 Requires:
   - tensorflow (imported lazily, never at module level)
   - proteinbert (imported lazily, never at module level)
@@ -11,6 +14,8 @@ Requires:
 from ...utils.logging import get_logger
 from ...registry.model_registry import ModelRegistry
 from .wrapper import ProteinBERTModel
+from .adapter import ProteinBERTDataAdapter, AdapterMetadata, TensorValidator
+from .runtime import Runtime
 
 
 logger = get_logger(__name__)
@@ -29,4 +34,8 @@ logger.debug("Registered model: proteinbert")
 __all__ = [
     "ProteinBERTModel",
     "ProteinBERT",
+    "ProteinBERTDataAdapter",
+    "AdapterMetadata",
+    "TensorValidator",
+    "Runtime",
 ]
