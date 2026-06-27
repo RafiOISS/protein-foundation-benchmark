@@ -1,0 +1,64 @@
+# Byte-compiled
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment
+venv/
+env/
+.venv/
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Generated outputs
+outputs/cache/
+outputs/experiments/
+outputs/reports/
+outputs/releases/
+outputs/logs/
+outputs/checkpoints/
+outputs/datasets/
+outputs/embeddings/
+outputs/predictions/
+
+# Model/data files
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.bin
+*.npz
+*.npy
+*.h5
+*.hdf5
+
+# Cache
+.cache/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Distribution
+dist/
+build/
+*.egg-info/
+
+# Coverage
+htmlcov/
+.coverage
+.coverage.*
+
+# Temp
+tmp/
+temp/
+*.log
+*.tmp

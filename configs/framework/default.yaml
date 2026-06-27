@@ -1,0 +1,23 @@
+# Framework configuration — top-level settings
+
+project:
+  name: "protein-foundation-benchmark"
+  version: "0.2.0"
+
+seed: 42
+device: auto  # auto, cuda, cpu, mps
+
+paths:
+  project_root: "."
+  configs: "configs"
+  outputs: "outputs"
+
+logging:
+  level: INFO
+  file: "outputs/logs/benchmark.log"
+  console: true
+
+checkpointing:
+  max_keep: 5
+  monitor: val_loss
+  mode: min

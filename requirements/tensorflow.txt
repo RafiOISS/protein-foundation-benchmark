@@ -1,0 +1,3 @@
+# TensorFlow dependencies (optional, for ProteinBERT)
+tensorflow>=2.13.0
+proteinbert>=1.0.0

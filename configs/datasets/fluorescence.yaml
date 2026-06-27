@@ -1,0 +1,19 @@
+# Fluorescence prediction dataset config
+
+dataset:
+  name: fluorescence
+  task_type: regression
+  num_classes: 1
+  num_samples:
+    train: 21579
+    valid: 5395
+    test: 5395
+  metrics:
+    - spearman
+    - pearson
+    - mse
+    - mae
+  sequence_length:
+    min: 236
+    max: 238
+    mean: 237

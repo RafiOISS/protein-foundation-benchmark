@@ -1,0 +1,18 @@
+# ESM-2 dataset config (TAPE secondary structure SS3)
+
+dataset:
+  name: tape_ss3
+  task_type: token_classification
+  num_classes: 3  # H, E, C
+  num_samples:
+    train: 9553
+    valid: 1185
+    test: 1185
+  metrics:
+    - accuracy
+    - f1_macro
+    - f1_micro
+  sequence_length:
+    min: 20
+    max: 1000
+    mean: 200

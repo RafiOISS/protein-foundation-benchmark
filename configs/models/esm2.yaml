@@ -1,0 +1,35 @@
+# ESM-2 model configuration
+
+model:
+  name: esm2
+  family: esm2
+  default_variant: esm2_t6_8M_UR50D
+  variants:
+    esm2_t6_8M_UR50D:
+      huggingface_id: facebook/esm2_t6_8M_UR50D
+      params: 8M
+      embedding_dim: 320
+      num_layers: 6
+    esm2_t12_35M_UR50D:
+      huggingface_id: facebook/esm2_t12_35M_UR50D
+      params: 35M
+      embedding_dim: 480
+      num_layers: 12
+    esm2_t30_150M_UR50D:
+      huggingface_id: facebook/esm2_t30_150M_UR50D
+      params: 150M
+      embedding_dim: 640
+      num_layers: 30
+    esm2_t33_650M_UR50D:
+      huggingface_id: facebook/esm2_t33_650M_UR50D
+      params: 650M
+      embedding_dim: 1280
+      num_layers: 33
+    esm2_t36_3B_UR50D:
+      huggingface_id: facebook/esm2_t36_3B_UR50D
+      params: 3B
+      embedding_dim: 2560
+      num_layers: 36
+  max_seq_len: 1022
+  pooling: mean
+  requires_torch: true

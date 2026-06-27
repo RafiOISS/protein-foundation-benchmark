@@ -1,0 +1,27 @@
+name: protein-foundation-benchmark
+channels:
+  - conda-forge
+  - pytorch
+  - defaults
+dependencies:
+  - python=3.12
+  - pytorch>=2.0.0
+  - pytorch-cuda=11.8
+  - transformers>=4.30.0
+  - numpy>=1.24.0
+  - pandas>=2.0.0
+  - scikit-learn>=1.3.0
+  - matplotlib>=3.7.0
+  - seaborn>=0.12.0
+  - pyyaml>=6.0
+  - rich>=13.0.0
+  - tqdm>=4.65.0
+  - scipy>=1.11.0
+  - psutil>=5.9.0
+  - hydra-core>=1.3.0
+  - omegaconf>=2.3.0
+  - pip
+  - pip:
+    - -e .
+    - tensorflow>=2.13.0
+    - proteinbert>=1.0.0

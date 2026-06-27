@@ -1,0 +1,98 @@
+{
+  "schema_version": "1.0.0",
+  "project": {
+    "name": "protein-foundation-benchmark",
+    "version": "0.1.0",
+    "description": "Benchmark framework for comparing pretrained protein foundation models",
+    "authors": ["RafiOISS"],
+    "license": "MIT",
+    "repository": "https://github.com/RafiOISS/protein-foundation-benchmark",
+    "homepage": "https://github.com/RafiOISS/protein-foundation-benchmark",
+    "keywords": [
+      "protein",
+      "foundation-model",
+      "benchmark",
+      "machine-learning",
+      "bioinformatics",
+      "deep-learning"
+    ]
+  },
+  "structure": {
+    "src": "Source code package",
+    "configs": "Configuration files (YAML)",
+    "metadata": "Metadata and manifest files",
+    "outputs": "Generated outputs (checkpoints, embeddings, metrics, figures)",
+    "docs": "Documentation",
+    "notebooks": "Example notebooks",
+    "tests": "Unit and integration tests"
+  },
+  "dependencies": {
+    "python": ">=3.12",
+    "core": [
+      "torch>=2.0.0",
+      "transformers>=4.30.0",
+      "numpy>=1.24.0",
+      "pandas>=2.0.0",
+      "scikit-learn>=1.3.0",
+      "matplotlib>=3.7.0",
+      "seaborn>=0.12.0",
+      "pyyaml>=6.0",
+      "rich>=13.0.0"
+    ],
+    "optional": [
+      "tensorflow>=2.13.0",
+      "proteinbert",
+      "onnx>=1.14.0",
+      "tqdm>=4.65.0",
+      "psutil>=5.9.0"
+    ]
+  },
+  "models": {
+    "supported": [
+      "ESM-2 (facebook/esm2_*)",
+      "ProtBERT (Rostlab/prot_bert*)",
+      "ProtT5 (Rostlab/prot_t5_*)",
+      "ProteinBERT (TensorFlow)",
+      "CNN Baseline",
+      "BiLSTM Baseline"
+    ],
+    "config_file": "configs/models.yaml"
+  },
+  "datasets": {
+    "supported": [
+      "Fluorescence Prediction",
+      "Stability Prediction",
+      "Protein-Protein Interaction",
+      "Secondary Structure (SS3/SS8)",
+      "Remote Homology Detection",
+      "Subcellular Localization",
+      "Gene Ontology Prediction"
+    ],
+    "config_file": "configs/datasets.yaml"
+  },
+  "benchmark": {
+    "metrics": {
+      "regression": ["mse", "mae", "spearman", "pearson", "rmse", "r2"],
+      "binary_classification": ["accuracy", "f1", "precision", "recall", "auroc", "auprc", "mcc"],
+      "multiclass_classification": ["accuracy", "f1_macro", "f1_micro", "f1_weighted", "auroc"],
+      "multilabel_classification": ["f1_macro", "f1_micro", "f1_samples", "auroc_macro", "auroc_micro", "hamming_loss", "subset_accuracy"],
+      "token_classification": ["accuracy", "f1_macro", "f1_micro", "f1_weighted"]
+    },
+    "statistical_tests": ["wilcoxon", "paired_ttest", "bootstrap", "friedman", "nemenyi"]
+  },
+  "outputs": {
+    "checkpoints": "Model checkpoints",
+    "embeddings": "Extracted embeddings",
+    "predictions": "Model predictions",
+    "metrics": "Computed metrics",
+    "figures": "Publication-quality figures",
+    "exports": "Exported results (CSV, JSON, Parquet)",
+    "logs": "Training/evaluation logs"
+  },
+  "reproducibility": {
+    "seed": 42,
+    "deterministic": true,
+    "environment_tracking": true,
+    "git_tracking": true
+  }
+}

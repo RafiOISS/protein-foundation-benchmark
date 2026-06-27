@@ -1,0 +1,15 @@
+# Hydra default configuration
+
+defaults:
+  - framework: default
+  - datasets: fluorescence
+  - models: esm2
+  - experiments: null
+  - _self_
+
+hydra:
+  run:
+    dir: outputs/experiments/${experiment.name}/${now:%Y-%m-%d_%H-%M-%S}
+  sweep:
+    dir: outputs/experiments/multirun/${now:%Y-%m-%d}
+    subdir: ${hydra.job.num}

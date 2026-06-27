@@ -1,0 +1,77 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "protein-foundation-benchmark"
+version = "0.2.0"
+description = "Benchmark framework for comparing pretrained protein foundation models"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [{name = "RafiOISS", email = ""}]
+keywords = [
+    "protein", "foundation-model", "benchmark",
+    "bioinformatics", "deep-learning", "pytorch",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+requires-python = ">=3.12"
+dependencies = [
+    "torch>=2.0.0",
+    "transformers>=4.30.0",
+    "numpy>=1.24.0",
+    "pandas>=2.0.0",
+    "scikit-learn>=1.3.0",
+    "matplotlib>=3.7.0",
+    "seaborn>=0.12.0",
+    "pyyaml>=6.0",
+    "rich>=13.0.0",
+    "tqdm>=4.65.0",
+    "scipy>=1.11.0",
+    "psutil>=5.9.0",
+    "hydra-core>=1.3.0",
+    "omegaconf>=2.3.0",
+]
+
+[project.optional-dependencies]
+tensorflow = ["tensorflow>=2.13.0"]
+proteinbert = ["proteinbert>=1.0.0"]
+dev = [
+    "pytest>=7.4.0", "pytest-cov>=4.1.0",
+    "black>=23.0.0", "ruff>=0.1.0", "mypy>=1.5.0",
+    "pre-commit>=3.5.0",
+    "jupyter>=1.0.0", "ipykernel>=6.25.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/RafiOISS/protein-foundation-benchmark"
+Repository = "https://github.com/RafiOISS/protein-foundation-benchmark"
+Issues = "https://github.com/RafiOISS/protein-foundation-benchmark/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["src*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v"
+
+[tool.black]
+line-length = 100
+target-version = ['py312']
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+select = ["E", "W", "F", "I"]
+
+[tool.mypy]
+python_version = "3.12"
+disallow_untyped_defs = true
+strict_optional = true

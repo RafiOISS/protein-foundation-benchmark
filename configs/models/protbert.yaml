@@ -1,0 +1,20 @@
+# ProtBERT model configuration
+
+model:
+  name: protbert
+  family: protbert
+  default_variant: prot_bert
+  variants:
+    prot_bert:
+      huggingface_id: Rostlab/prot_bert
+      params: 420M
+      embedding_dim: 1024
+      num_layers: 30
+    prot_bert_bfd:
+      huggingface_id: Rostlab/prot_bert_bfd
+      params: 420M
+      embedding_dim: 1024
+      num_layers: 30
+  max_seq_len: 1022
+  pooling: mean
+  requires_torch: true

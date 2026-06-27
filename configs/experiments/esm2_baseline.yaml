@@ -1,0 +1,23 @@
+# Baseline benchmark experiment
+
+experiment:
+  name: esm2_baseline
+  description: "ESM-2 baseline benchmark on TAPE SS3"
+  tags:
+    - baseline
+    - esm2
+    - ss3
+
+models:
+  - esm2
+
+datasets:
+  - tape_ss3
+
+training:
+  epochs: 10
+  learning_rate: 0.0001
+  batch_size: 32
+  optimizer: adamw
+  scheduler: cosine_with_warmup
+  early_stopping_patience: 5
