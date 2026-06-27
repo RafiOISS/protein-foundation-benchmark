@@ -91,6 +91,97 @@ class DatasetRegistry:
         )
 
     @classmethod
+    def load(
+        cls,
+        name: str,
+        data_dir: Optional[Union[str, Path]] = None,
+        cache_dir: Optional[Union[str, Path]] = None,
+        download_if_missing: bool = True,
+        preprocess_if_needed: bool = True,
+        verify_on_load: bool = True,
+        **kwargs,
+    ) -> BaseDataset:
+        """Load a dataset with full lifecycle: download → verify → preprocess → cache.
+
+        This is the primary entry point for loading datasets in the framework.
+
+        Args:
+            name: Registered dataset name.
+            data_dir: Directory containing the dataset (default: cache_dir/name).
+            cache_dir: Root cache directory (used with name to form data_dir).
+            download_if_missing: Download raw data if not present.
+            preprocess_if_needed: Preprocess if processed cache doesn't exist.
+            verify_on_load: Run integrity verification after loading.
+            **kwargs: Additional arguments passed to create().
+
+        Returns:
+            Dataset instance (train split).
+        """
+        if data_dir is None:
+            if cache_dir is None:
+                cache_dir = Path("outputs/cache/datasets")
+            data_dir = Path(cache_dir) / name
+
+        data_dir = Path(data_dir)
+
+        if name not in cls._datasets:
+            raise ValueError(
+                f"Unknown dataset '{name}'. "
+                f"Available: {list(cls._datasets.keys())}"
+            )
+
+        dataset_class = cls._datasets[name]
+        merged_config = {**cls._configs.get(name, {}), **(kwargs.pop("config", {}))}
+
+        raw_dir = data_dir / "raw"
+        processed_dir = data_dir / "processed"
+        metadata_dir = data_dir / "metadata"
+
+        has_raw = (
+            all((raw_dir / rel).exists() for rel in dataset_class.REQUIRED_FILES)
+            if dataset_class.REQUIRED_FILES
+            else raw_dir.exists()
+        )
+
+        # Step 1: Download if missing
+        if download_if_missing and not has_raw:
+            logger.info(f"Downloading dataset '{name}' to {raw_dir}")
+            tmp = dataset_class(
+                data_dir=data_dir, split=DatasetSplit.TRAIN,
+                config=merged_config, **kwargs,
+            )
+            tmp.download()
+            has_raw = True
+        elif not has_raw:
+            raise FileNotFoundError(
+                f"Dataset '{name}' not found at {raw_dir}. "
+                f"Set download_if_missing=True or download manually."
+            )
+
+        # Step 2: Preprocess if no processed cache
+        if preprocess_if_needed and not list(processed_dir.glob("*.parquet")):
+            tmp = dataset_class(
+                data_dir=data_dir, split=DatasetSplit.TRAIN,
+                config=merged_config, **kwargs,
+            )
+            tmp.preprocess()
+            if verify_on_load:
+                result = tmp.verify()
+                if not result.get("valid", True):
+                    for err in result.get("errors", []):
+                        logger.error(f"Verification error: {err}")
+            tmp.generate_manifest()
+
+        # Step 3: Create final instance with data loaded
+        ds = dataset_class(
+            data_dir=data_dir, split=DatasetSplit.TRAIN,
+            config=merged_config, **kwargs,
+        )
+
+        logger.info(f"Dataset '{name}' loaded successfully ({len(ds)} samples)")
+        return ds
+
+    @classmethod
     def list_datasets(cls) -> List[str]:
         """List all registered dataset names."""
         return list(cls._datasets.keys())

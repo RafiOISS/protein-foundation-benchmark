@@ -1,29 +1,17 @@
-"""
-Visualization package for the Protein Foundation Model Benchmark Framework.
+"""Visualization package for the Protein Foundation Model Benchmark Framework."""
 
-Contains publication-quality plotting functions.
-"""
-
-from .plots import (
-    plot_metric_comparison,
-    plot_learning_curves,
-    plot_confusion_matrix,
-    plot_roc_curve,
-    plot_embedding_tsne,
-    plot_correlation_heatmap,
-    plot_model_size_vs_performance,
-    save_figure,
-    setup_style,
+from .visualization import (
+    plot_length_histogram,
+    plot_length_boxplot,
+    plot_class_distribution,
+    plot_split_comparison,
+    generate_all_figures,
 )
 
 __all__ = [
-    "plot_metric_comparison",
-    "plot_learning_curves",
-    "plot_confusion_matrix",
-    "plot_roc_curve",
-    "plot_embedding_tsne",
-    "plot_correlation_heatmap",
-    "plot_model_size_vs_performance",
-    "save_figure",
-    "setup_style",
+    "plot_length_histogram",
+    "plot_length_boxplot",
+    "plot_class_distribution",
+    "plot_split_comparison",
+    "generate_all_figures",
 ]

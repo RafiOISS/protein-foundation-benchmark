@@ -12,6 +12,9 @@ __license__ = "MIT"
 from .framework.benchmark import ProteinBenchmark
 from .framework.experiment import Experiment, ExperimentStatus
 
+# Import datasets to trigger registration with DatasetRegistry
+from . import datasets  # noqa: F401
+
 __all__ = [
     "ProteinBenchmark",
     "Experiment",
