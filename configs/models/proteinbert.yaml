@@ -27,3 +27,15 @@ model:
     max_length: 512
     unknown_token: X
     extended_alphabet: false
+
+  # Training configuration
+  training:
+    optimizer: adam
+    learning_rate: 0.0001
+    epochs: 20
+    batch_size: 8
+    early_stopping: true
+    patience: 5
+    resume: true
+    save_best_only: true
+    validation_split: 0.2

@@ -3,9 +3,11 @@
 Responsibilities:
   - lazy import TensorFlow and proteinbert packages
   - instantiate and manage the pretrained model
-  - expose placeholder interfaces: load(), predict(), save(), summary()
-  - preprocessing: prepare_inputs() — convert raw dataset to model-ready batches
-  - no training logic
+  - expose interfaces: load(), predict(), save(), summary(), train()
+  - preprocessing: prepare_inputs(), prepare_dataset()
+  - runtime initialization: initialize_runtime()
+  - checkpoint management: initialize_checkpoint_manager()
+  - training: train() delegates to ProteinBERTTrainer
 """
 
 from pathlib import Path
@@ -69,6 +71,8 @@ class ProteinBERTModel(BaseProteinModel):
         self._loaded: bool = False
         self._cache_manager: Any = None
         self._runtime: Any = None
+        self._checkpoint_manager: Any = None
+        self._trainer: Any = None
 
         logger.info("ProteinBERTModel initialized (TensorFlow backend not yet loaded)")
 
@@ -257,6 +261,87 @@ class ProteinBERTModel(BaseProteinModel):
             min_disk_gb=self.config.get("min_disk_space_gb", 5.0),
             require_gpu=False,
         )
+
+    def initialize_checkpoint_manager(
+        self,
+        workspace_root: Optional[Union[str, Path]] = None,
+    ) -> "CheckpointManager":
+        """Initialize the CheckpointManager.
+
+        Args:
+            workspace_root: Project workspace root (auto-detected if None).
+
+        Returns:
+            CheckpointManager instance.
+        """
+        from .checkpoints import CheckpointManager
+
+        if workspace_root is None:
+            workspace_root = Path(__file__).resolve().parent.parent.parent.parent
+
+        self._checkpoint_manager = CheckpointManager(
+            workspace_root=workspace_root,
+            cache_manager=self._cache_manager,
+        )
+        logger.info(f"CheckpointManager initialized ({self._checkpoint_manager.checkpoint_root})")
+        return self._checkpoint_manager
+
+    @property
+    def checkpoint_manager(self) -> Any:
+        return self._checkpoint_manager
+
+    def train(
+        self,
+        train_data: Any,
+        val_data: Optional[Any] = None,
+        output_dir: Optional[Union[str, Path]] = None,
+        experiment_id: Optional[str] = None,
+        config: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Run ProteinBERT training.
+
+        Lazily initializes CheckpointManager and ProteinBERTTrainer.
+        Ensures the model is loaded before training.
+
+        Args:
+            train_data: Training data (ProteinBERTDataAdapter or array tuple).
+            val_data: Validation data (ProteinBERTDataAdapter or array tuple).
+            output_dir: Output directory for training artifacts.
+            experiment_id: Experiment ID for structured output.
+            config: Training config overrides.
+
+        Returns:
+            Dict with training results (history, best metrics, etc.).
+        """
+        from .trainer import ProteinBERTTrainer
+
+        self._ensure_loaded()
+
+        train_config = dict(self.config)
+        if config:
+            train_config.update(config)
+
+        if self._checkpoint_manager is None:
+            self.initialize_checkpoint_manager()
+
+        self._trainer = ProteinBERTTrainer(
+            config=train_config,
+            checkpoint_manager=self._checkpoint_manager,
+        )
+
+        result = self._trainer.train(
+            model=self._tf_model,
+            train_data=train_data,
+            val_data=val_data,
+            output_dir=output_dir,
+            experiment_id=experiment_id,
+        )
+
+        logger.info(
+            f"Training complete: {result['trained_epochs']} epochs, "
+            f"best val_loss={result['best_val_loss']:.4f}"
+        )
+        return result
 
     def generate_runtime_reports(
         self,

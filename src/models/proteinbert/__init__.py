@@ -6,6 +6,9 @@ wrapper with lazy imports. Registered with ModelRegistry on import.
 Includes ProteinBERTDataAdapter — a framework-to-model tensor bridge
 for converting preprocessed outputs into ProteinBERT-ready tensors.
 
+Includes CheckpointManager — centralized checkpoint management.
+Includes ProteinBERTTrainer — TensorFlow training engine.
+
 Requires:
   - tensorflow (imported lazily, never at module level)
   - proteinbert (imported lazily, never at module level)
@@ -16,6 +19,8 @@ from ...registry.model_registry import ModelRegistry
 from .wrapper import ProteinBERTModel
 from .adapter import ProteinBERTDataAdapter, AdapterMetadata, TensorValidator
 from .runtime import Runtime
+from .checkpoints import CheckpointManager
+from .trainer import ProteinBERTTrainer, TrainingHistory
 
 
 logger = get_logger(__name__)
@@ -38,4 +43,7 @@ __all__ = [
     "AdapterMetadata",
     "TensorValidator",
     "Runtime",
+    "CheckpointManager",
+    "ProteinBERTTrainer",
+    "TrainingHistory",
 ]
